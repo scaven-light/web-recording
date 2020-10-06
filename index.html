@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Web-Recording</title>
+  <link rel="icon" sizes="192x192" href="./favicon-192x192.png">
+  <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+  <div id="container_0">
+    <h1>Web video recordings probe. <a href="//github.com/scaven-touchapp/web-recording" title="Web-recording repo">Source</a></h1>
+  </div>
+  <div id="container_1" style="border:solid 4px darkslategrey;">
+    <h2>Screen capture</h2>
+    <video id="video-screen-cap" autoplay playsinline muted poster="./favicon-192x192.png" style="max-width:33%"></video>
+    <br>
+    <button id="startButton" disabled>Start screen capture</button>
+  </div>
+
+  <div id="container_2" style="border:solid 4px darkslategrey;">
+    <h2>Camera, recording and download</h2>
+    <p>For more information see the MediaStream Recording API <a
+            href="http://w3c.github.io/mediacapture-record/MediaRecorder.html"
+            title="W3C MediaStream Recording API Editor's Draft">Editor's&nbsp;Draft</a>.</p>
+
+    <video id="gum" playsinline autoplay muted poster="./favicon-192x192.png" style="max-width:33%;border:solid 2px yellowgreen;"></video>
+    <video id="recorded" playsinline loop poster="./favicon-192x192.png" style="max-width:33;border:solid 2px yellowgreen;"></video>
+
+    <div>
+      <button id="start">Start camera</button>
+      <button id="record" disabled>Start Recording</button>
+      <button id="play" disabled>Play</button>
+      <button id="download" disabled>Download</button>
+      <p>Echo cancellation: <input type="checkbox" id="echoCancellation"></p>
+    </div>
+  </div>
+
+
+  <div id="errorMsg" style="color:darkred;border:solid 2px darkslateblue;">HERE BE ERRORS:</div>
+
+  <!-- script src="https://webrtc.github.io/adapter/adapter-latest.js"></script -->
+  <script src="js/main.js"></script>
+
+  <!-- script src="../../../js/lib/ga.js"></script -->
+
+</body>
+</html>
