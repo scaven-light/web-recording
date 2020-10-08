@@ -22,23 +22,6 @@ function errorMsg(msg, error) {
     }
 }
 
-function get_options() {
-    let options = {mimeType: 'video/webm;codecs=vp9,opus'};
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        console.error(`${options.mimeType} is not supported`);
-        options = {mimeType: 'video/webm;codecs=vp8,opus'};
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            console.error(`${options.mimeType} is not supported`);
-            options = {mimeType: 'video/webm'};
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                console.error(`${options.mimeType} is not supported`);
-                options = {mimeType: ''};
-            }
-        }
-    }
-    return options;
-}
-
 setup_screen_cap(
     '#con-screen-cap',
 );
@@ -55,9 +38,17 @@ setup_camera(
 function setup_screen_cap(
     container_selector
 ) {
+    const startButton = document.querySelector(container_selector + ' button#start');
+
+    if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+        startButton.disabled = false;
+    } else {
+        errorMsg('getDisplayMedia is not supported');
+    }
+
     function handleSuccess(stream) {
         startButton.disabled = true;
-        const video = document.querySelector(container_selector + ' #vid-screen-cap');
+        const video = document.querySelector(container_selector + ' video#gum');
         video.srcObject = stream;
 
         // demonstrates how to detect that the user has stopped
@@ -67,22 +58,12 @@ function setup_screen_cap(
             startButton.disabled = false;
         });
     }
-
-    function handleError(error) {
-        errorMsg(`getDisplayMedia error: ${error.name}`, error);
-    }
-
-    const startButton = document.querySelector(container_selector + ' button#start');
     startButton.addEventListener('click', () => {
-        navigator.mediaDevices.getDisplayMedia({video: true})
-            .then(handleSuccess, handleError);
+        navigator.mediaDevices.getDisplayMedia({video: true}).then(
+            handleSuccess,
+            error => { errorMsg(`getDisplayMedia error: ${error.name}`, error); }
+        );
     });
-
-    if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
-        startButton.disabled = false;
-    } else {
-        errorMsg('getDisplayMedia is not supported');
-    }
 }
 
 
@@ -141,6 +122,23 @@ function setup_camera(
         }
     }
 
+    function get_options() {
+        let options = {mimeType: 'video/webm;codecs=vp9,opus'};
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            console.error(`${options.mimeType} is not supported`);
+            options = {mimeType: 'video/webm;codecs=vp8,opus'};
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                console.error(`${options.mimeType} is not supported`);
+                options = {mimeType: 'video/webm'};
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.error(`${options.mimeType} is not supported`);
+                    options = {mimeType: ''};
+                }
+            }
+        }
+        return options;
+    }
+
     function startRecording() {
         recordedBlobs = [];
 
@@ -191,16 +189,6 @@ function setup_camera(
         });
     }
 
-    async function init(constraints) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            handleSuccess(stream);
-        } catch (e) {
-            console.error('navigator.getUserMedia error:', e);
-            errorMsg(`navigator.getUserMedia error:${e.toString()}`);
-        }
-    }
-
     startButton.addEventListener('click', async () => {
         const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
         const constraints = {
@@ -212,7 +200,14 @@ function setup_camera(
             }
         };
         console.log('Using media constraints:', constraints);
-        await init(constraints);
+
+        navigator.mediaDevices.getUserMedia(constraints).then(
+            handleSuccess,
+            error => {
+                console.error('navigator.getUserMedia error:', error);
+                errorMsg(`navigator.getUserMedia error:${error.toString()}`);
+            }
+        );
     });
 
     if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
