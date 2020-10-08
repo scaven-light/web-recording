@@ -14,7 +14,6 @@
 // }
 
 
-
 function errorMsg(msg, error) {
     const errorElement = document.querySelector('#errorMsg');
     errorElement.innerHTML += `<p>${msg}</p>`;
@@ -23,94 +22,7 @@ function errorMsg(msg, error) {
     }
 }
 
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-function handleSuccess1(stream) {
-    startButton.disabled = true;
-    const video = document.querySelector('#video-screen-cap');
-    video.srcObject = stream;
-
-    // demonstrates how to detect that the user has stopped
-    // sharing the screen via the browser UI.
-    stream.getVideoTracks()[0].addEventListener('ended', () => {
-        errorMsg('The user has ended sharing the screen');
-        startButton.disabled = false;
-    });
-}
-
-function handleError(error) {
-    errorMsg(`getDisplayMedia error: ${error.name}`, error);
-}
-
-const startButton = document.getElementById('startButton');
-startButton.addEventListener('click', () => {
-    navigator.mediaDevices.getDisplayMedia({video: true})
-        .then(handleSuccess, handleError);
-});
-
-if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
-    startButton.disabled = false;
-} else {
-    errorMsg('getDisplayMedia is not supported');
-}
-
-
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-let mediaRecorder;
-let recordedBlobs;
-
-const recordedVideo = document.querySelector('video#recorded');
-const recordButton = document.querySelector('button#record');
-
-recordButton.addEventListener('click', () => {
-    if (recordButton.textContent === 'Start Recording') {
-        startRecording();
-    } else {
-        stopRecording();
-        recordButton.textContent = 'Start Recording';
-        playButton.disabled = false;
-        downloadButton.disabled = false;
-    }
-});
-
-const playButton = document.querySelector('button#play');
-playButton.addEventListener('click', () => {
-    const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
-    recordedVideo.src = null;
-    recordedVideo.srcObject = null;
-    recordedVideo.src = window.URL.createObjectURL(superBuffer);
-    recordedVideo.controls = true;
-    recordedVideo.play();
-});
-
-const downloadButton = document.querySelector('button#download');
-downloadButton.addEventListener('click', () => {
-    const blob = new Blob(recordedBlobs, {type: 'video/webm'});
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'test.webm';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    }, 100);
-});
-
-function handleDataAvailable(event) {
-    console.log('handleDataAvailable', event);
-    if (event.data && event.data.size > 0) {
-        recordedBlobs.push(event.data);
-    }
-}
-
-function startRecording() {
-    recordedBlobs = [];
+function get_options() {
     let options = {mimeType: 'video/webm;codecs=vp9,opus'};
     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         console.error(`${options.mimeType} is not supported`);
@@ -124,61 +36,179 @@ function startRecording() {
             }
         }
     }
+    return options;
+}
 
-    try {
-        mediaRecorder = new MediaRecorder(window.stream, options);
-    } catch (e) {
-        console.error('Exception while creating MediaRecorder:', e);
-        errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);
-        return;
+setup_screen_cap(
+    '#con-screen-cap',
+);
+setup_camera(
+    '#con-camera',
+);
+
+
+
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+function setup_screen_cap(
+    container_selector
+) {
+    function handleSuccess(stream) {
+        startButton.disabled = true;
+        const video = document.querySelector(container_selector + ' #vid-screen-cap');
+        video.srcObject = stream;
+
+        // demonstrates how to detect that the user has stopped
+        // sharing the screen via the browser UI.
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+            errorMsg('The user has ended sharing the screen');
+            startButton.disabled = false;
+        });
     }
 
-    console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
-    recordButton.textContent = 'Stop Recording';
-    playButton.disabled = true;
-    downloadButton.disabled = true;
-    mediaRecorder.onstop = (event) => {
-        console.log('Recorder stopped: ', event);
-        console.log('Recorded Blobs: ', recordedBlobs);
-    };
-    mediaRecorder.ondataavailable = handleDataAvailable;
-    mediaRecorder.start();
-    console.log('MediaRecorder started', mediaRecorder);
-}
+    function handleError(error) {
+        errorMsg(`getDisplayMedia error: ${error.name}`, error);
+    }
 
-function stopRecording() {
-    mediaRecorder.stop();
-}
+    const startButton = document.querySelector(container_selector + ' button#start');
+    startButton.addEventListener('click', () => {
+        navigator.mediaDevices.getDisplayMedia({video: true})
+            .then(handleSuccess, handleError);
+    });
 
-function handleSuccess(stream) {
-    recordButton.disabled = false;
-    console.log('getUserMedia() got stream:', stream);
-    window.stream = stream;
-
-    const gumVideo = document.querySelector('video#gum');
-    gumVideo.srcObject = stream;
-}
-
-async function init(constraints) {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        handleSuccess(stream);
-    } catch (e) {
-        console.error('navigator.getUserMedia error:', e);
-        errorMsg(`navigator.getUserMedia error:${e.toString()}`);
+    if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+        startButton.disabled = false;
+    } else {
+        errorMsg('getDisplayMedia is not supported');
     }
 }
 
-document.querySelector('button#start').addEventListener('click', async () => {
-    const hasEchoCancellation = document.querySelector('#echoCancellation').checked;
-    const constraints = {
-        audio: {
-            echoCancellation: {exact: hasEchoCancellation}
-        },
-        video: {
-            width: 1280, height: 720
+
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+function setup_camera(
+    container_selector
+) {
+    let mediaRecorder;
+    let recordedBlobs;
+
+    const recordButton = document.querySelector(container_selector + ' button#record');
+
+    recordButton.addEventListener('click', () => {
+        if (recordButton.textContent === 'Start Recording') {
+            startRecording();
+            recordButton.textContent = 'Stop Recording';
+            playButton.disabled = true;
+            downloadButton.disabled = true;
+        } else {
+            stopRecording();
+            recordButton.textContent = 'Start Recording';
+            playButton.disabled = false;
+            downloadButton.disabled = false;
         }
-    };
-    console.log('Using media constraints:', constraints);
-    await init(constraints);
-});
+    });
+
+    const playButton = document.querySelector(container_selector + ' button#play');
+    playButton.addEventListener('click', () => {
+        const recordedVideo = document.querySelector(container_selector + ' video#recorded');
+        const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+        recordedVideo.src = null;
+        recordedVideo.srcObject = null;
+        recordedVideo.src = window.URL.createObjectURL(superBuffer);
+        recordedVideo.controls = true;
+        recordedVideo.play();
+    });
+
+    const downloadButton = document.querySelector(container_selector + ' button#download');
+    downloadButton.addEventListener('click', () => {
+        const blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'test.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    });
+
+    function handleDataAvailable(event) {
+        console.log('handleDataAvailable', event);
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+        }
+    }
+
+    function startRecording() {
+        recordedBlobs = [];
+
+        let options = get_options();
+
+        try {
+            mediaRecorder = new MediaRecorder(window.cameraStream, options);
+        } catch (e) {
+            console.error('Exception while creating MediaRecorder:', e);
+            errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);
+            return;
+        }
+
+        console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+        mediaRecorder.onstop = (event) => {
+            console.log('Recorder stopped: ', event);
+            console.log('Recorded Blobs: ', recordedBlobs);
+        };
+        mediaRecorder.ondataavailable = handleDataAvailable;
+        mediaRecorder.start();
+        console.log('MediaRecorder started', mediaRecorder);
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+    }
+
+    function handleSuccess(stream) {
+        recordButton.disabled = false;
+        console.log('getUserMedia() got stream:', stream);
+        window.cameraStream = stream;
+
+        const gumVideo = document.querySelector(container_selector + ' video#gum');
+        gumVideo.srcObject = stream;
+    }
+
+    async function init(constraints) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            handleSuccess(stream);
+        } catch (e) {
+            console.error('navigator.getUserMedia error:', e);
+            errorMsg(`navigator.getUserMedia error:${e.toString()}`);
+        }
+    }
+
+    const startButton = document.querySelector(container_selector + ' button#start');
+    startButton.addEventListener('click', async () => {
+        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const constraints = {
+            audio: {
+                echoCancellation: {exact: hasEchoCancellation}
+            },
+            video: {
+                width: 1280, height: 720
+            }
+        };
+        console.log('Using media constraints:', constraints);
+        await init(constraints);
+    });
+
+
+    if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+        startButton.disabled = false;
+    } else {
+        errorMsg('getUserMedia is not supported');
+    }
+}
