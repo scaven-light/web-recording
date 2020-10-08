@@ -22,12 +22,36 @@ function errorMsg(msg, error) {
     }
 }
 
-setup_screen_cap(
+window.cameraStream = null;
+window.screenCapStream = null;
+
+// setup_screen_cap(
+//     '#con-screen-cap',
+// );
+
+setup_generic(
+    window.screenCapStream,
     '#con-screen-cap',
-);
-setup_camera(
+    navigator.mediaDevices.getDisplayMedia,
+    'getDisplayMedia',
+    {
+        video: true,
+        // audio: true,
+    },
+)
+setup_generic(
     window.cameraStream,
     '#con-camera',
+    navigator.mediaDevices.getUserMedia,
+    'getUserMedia',
+    {
+        audio: {
+            echoCancellation: {exact: true}
+        },
+        video: {
+            width: 1280, height: 720
+        }
+    },
 );
 
 
@@ -35,44 +59,47 @@ setup_camera(
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-function setup_screen_cap(
-    container_selector
-) {
-    const startButton = document.querySelector(container_selector + ' button#start');
-
-    if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
-        startButton.disabled = false;
-    } else {
-        errorMsg('getDisplayMedia is not supported');
-    }
-
-    function handleSuccess(stream) {
-        startButton.disabled = true;
-        const video = document.querySelector(container_selector + ' video#gum');
-        video.srcObject = stream;
-
-        // demonstrates how to detect that the user has stopped
-        // sharing the screen via the browser UI.
-        stream.getVideoTracks()[0].addEventListener('ended', () => {
-            errorMsg('The user has ended sharing the screen');
-            startButton.disabled = false;
-        });
-    }
-    startButton.addEventListener('click', () => {
-        navigator.mediaDevices.getDisplayMedia({video: true}).then(
-            handleSuccess,
-            error => { errorMsg(`getDisplayMedia error: ${error.name}`, error); }
-        );
-    });
-}
+// function setup_screen_cap(
+//     container_selector
+// ) {
+//     const startButton = document.querySelector(container_selector + ' button#start');
+//
+//     if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+//         startButton.disabled = false;
+//     } else {
+//         errorMsg('getDisplayMedia is not supported');
+//     }
+//
+//     function handleSuccess(stream) {
+//         startButton.disabled = true;
+//         const video = document.querySelector(container_selector + ' video#gum');
+//         video.srcObject = stream;
+//
+//         // demonstrates how to detect that the user has stopped
+//         // sharing the screen via the browser UI.
+//         stream.getVideoTracks()[0].addEventListener('ended', () => {
+//             errorMsg('The user has ended sharing the screen');
+//             startButton.disabled = false;
+//         });
+//     }
+//     startButton.addEventListener('click', () => {
+//         navigator.mediaDevices.getDisplayMedia({video: true}).then(
+//             handleSuccess,
+//             error => { errorMsg(`getDisplayMedia error: ${error.name}`, error); }
+//         );
+//     });
+// }
 
 
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-function setup_camera(
+function setup_generic(
     stream_holder,
-    container_selector
+    container_selector,
+    get_stuff,
+    stuff_name,
+    constraints
 ) {
     let mediaRecorder;
     let recordedBlobs;
@@ -142,17 +169,17 @@ function setup_camera(
     function startRecording() {
         recordedBlobs = [];
 
-        let options = get_options();
+        // let options = get_options();
 
         try {
-            mediaRecorder = new MediaRecorder(stream_holder, options);
+            mediaRecorder = new MediaRecorder(stream_holder);
         } catch (e) {
             console.error('Exception while creating MediaRecorder:', e);
             errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);
             return;
         }
 
-        console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+        console.log('Created MediaRecorder', mediaRecorder);
         mediaRecorder.onstop = (event) => {
             console.log('Recorder stopped: ', event);
             console.log('Recorded Blobs: ', recordedBlobs);
@@ -183,7 +210,7 @@ function setup_camera(
         gumVideo.srcObject = stream;
 
         stream.getVideoTracks()[0].addEventListener('ended', () => {
-            errorMsg('The user has ended the stream');
+            errorMsg('The stream was ended by user');
             startButton.disabled = false;
             stopRecording()
         });
@@ -191,28 +218,21 @@ function setup_camera(
 
     startButton.addEventListener('click', async () => {
         const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
-        const constraints = {
-            audio: {
-                echoCancellation: {exact: hasEchoCancellation}
-            },
-            video: {
-                width: 1280, height: 720
-            }
-        };
-        console.log('Using media constraints:', constraints);
+        console.log('Using constraints:', constraints);
 
-        navigator.mediaDevices.getUserMedia(constraints).then(
+        let bound_get_stuff = get_stuff.bind(navigator.mediaDevices);
+        bound_get_stuff(constraints).then(
             handleSuccess,
             error => {
-                console.error('navigator.getUserMedia error:', error);
-                errorMsg(`navigator.getUserMedia error:${error.toString()}`);
+                console.error('mediaDevices.' + stuff_name + ' error:', error);
+                errorMsg('mediaDevices.' + stuff_name + ` error:${error.toString()}`);
             }
         );
     });
 
-    if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+    if ((navigator.mediaDevices && stuff_name in navigator.mediaDevices)) {
         startButton.disabled = false;
     } else {
-        errorMsg('getUserMedia is not supported');
+        errorMsg('mediaDevices.' + stuff_name + ' is not supported');
     }
 }
