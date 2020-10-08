@@ -43,6 +43,7 @@ setup_screen_cap(
     '#con-screen-cap',
 );
 setup_camera(
+    window.cameraStream,
     '#con-camera',
 );
 
@@ -89,28 +90,25 @@ function setup_screen_cap(
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 function setup_camera(
+    stream_holder,
     container_selector
 ) {
     let mediaRecorder;
     let recordedBlobs;
 
+    const startButton = document.querySelector(container_selector + ' button#start');
     const recordButton = document.querySelector(container_selector + ' button#record');
+    const playButton = document.querySelector(container_selector + ' button#play');
+    const downloadButton = document.querySelector(container_selector + ' button#download');
 
     recordButton.addEventListener('click', () => {
         if (recordButton.textContent === 'Start Recording') {
             startRecording();
-            recordButton.textContent = 'Stop Recording';
-            playButton.disabled = true;
-            downloadButton.disabled = true;
         } else {
             stopRecording();
-            recordButton.textContent = 'Start Recording';
-            playButton.disabled = false;
-            downloadButton.disabled = false;
         }
     });
 
-    const playButton = document.querySelector(container_selector + ' button#play');
     playButton.addEventListener('click', () => {
         const recordedVideo = document.querySelector(container_selector + ' video#recorded');
         const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
@@ -121,7 +119,6 @@ function setup_camera(
         recordedVideo.play();
     });
 
-    const downloadButton = document.querySelector(container_selector + ' button#download');
     downloadButton.addEventListener('click', () => {
         const blob = new Blob(recordedBlobs, {type: 'video/webm'});
         const url = window.URL.createObjectURL(blob);
@@ -150,7 +147,7 @@ function setup_camera(
         let options = get_options();
 
         try {
-            mediaRecorder = new MediaRecorder(window.cameraStream, options);
+            mediaRecorder = new MediaRecorder(stream_holder, options);
         } catch (e) {
             console.error('Exception while creating MediaRecorder:', e);
             errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);
@@ -165,19 +162,33 @@ function setup_camera(
         mediaRecorder.ondataavailable = handleDataAvailable;
         mediaRecorder.start();
         console.log('MediaRecorder started', mediaRecorder);
+
+        recordButton.textContent = 'Stop Recording';
+        playButton.disabled = true;
+        downloadButton.disabled = true;
     }
 
     function stopRecording() {
         mediaRecorder.stop();
+        recordButton.textContent = 'Start Recording';
+        playButton.disabled = false;
+        downloadButton.disabled = false;
     }
 
     function handleSuccess(stream) {
+        startButton.disabled = true;
         recordButton.disabled = false;
-        console.log('getUserMedia() got stream:', stream);
-        window.cameraStream = stream;
+        console.log('Got stream:', stream);
+        stream_holder = stream;
 
         const gumVideo = document.querySelector(container_selector + ' video#gum');
         gumVideo.srcObject = stream;
+
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+            errorMsg('The user has ended the stream');
+            startButton.disabled = false;
+            stopRecording()
+        });
     }
 
     async function init(constraints) {
@@ -190,7 +201,6 @@ function setup_camera(
         }
     }
 
-    const startButton = document.querySelector(container_selector + ' button#start');
     startButton.addEventListener('click', async () => {
         const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
         const constraints = {
@@ -204,7 +214,6 @@ function setup_camera(
         console.log('Using media constraints:', constraints);
         await init(constraints);
     });
-
 
     if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
         startButton.disabled = false;
