@@ -22,84 +22,97 @@ function errorMsg(msg, error) {
     }
 }
 
-window.cameraStream = null;
-window.screenCapStream = null;
+function setup_screencap() {
+    window.screenCapStream = null;
+    let container_selector = '#con-screen-cap';
 
-// setup_screen_cap(
-//     '#con-screen-cap',
-// );
-
-setup_generic(
-    window.screenCapStream,
-    '#con-screen-cap',
-    navigator.mediaDevices.getDisplayMedia,
-    'getDisplayMedia',
-    {
-        video: true,
-        // audio: true,
-    },
-)
-setup_generic(
-    window.cameraStream,
-    '#con-camera',
-    navigator.mediaDevices.getUserMedia,
-    'getUserMedia',
-    {
-        audio: {
-            echoCancellation: {exact: true}
-        },
-        video: {
-            width: 1280, height: 720
+    function checker() {
+        const startButton = document.querySelector(container_selector + ' button#start');
+        if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+            startButton.disabled = false;
+        } else {
+            errorMsg('mediaDevices.getDisplayMedia' + ' is not supported');
         }
-    },
-);
+    }
 
+    function on_start_func(handle_success_func) {
+        // const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const constraints = {
+            video: true,
+            // audio: true,
+        };
+        console.log('Using constraints:', constraints);
 
+        navigator.mediaDevices.getDisplayMedia(constraints).then(
+            handle_success_func,
+            error => {
+                console.error('mediaDevices.getDisplayMedia' + ' error:', error);
+                errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
+            }
+        );
+    }
+
+    setup_recordable(
+        checker,
+        on_start_func,
+        window.screenCapStream,
+        container_selector,
+    );
+
+}
+setup_screencap();
+
+function setup_camera() {
+    window.cameraStream = null;
+    let container_selector = '#con-camera';
+
+    function checker() {
+        const startButton = document.querySelector(container_selector + ' button#start');
+        if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+            startButton.disabled = false;
+        } else {
+            errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
+        }
+    }
+
+    function on_start_func(handle_success_func) {
+        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const constraints = {
+            audio: {
+                echoCancellation: {exact: hasEchoCancellation}
+            },
+            video: {
+                width: 1280, height: 720
+            }
+        };
+        console.log('Using constraints:', constraints);
+
+        navigator.mediaDevices.getUserMedia(constraints).then(
+            handle_success_func,
+            error => {
+                console.error('mediaDevices.getUserMedia' + ' error:', error);
+                errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
+            }
+        );
+    }
+
+    setup_recordable(
+        checker,
+        on_start_func,
+        window.cameraStream,
+        container_selector,
+    );
+}
+setup_camera();
 
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-// function setup_screen_cap(
-//     container_selector
-// ) {
-//     const startButton = document.querySelector(container_selector + ' button#start');
-//
-//     if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
-//         startButton.disabled = false;
-//     } else {
-//         errorMsg('getDisplayMedia is not supported');
-//     }
-//
-//     function handleSuccess(stream) {
-//         startButton.disabled = true;
-//         const video = document.querySelector(container_selector + ' video#gum');
-//         video.srcObject = stream;
-//
-//         // demonstrates how to detect that the user has stopped
-//         // sharing the screen via the browser UI.
-//         stream.getVideoTracks()[0].addEventListener('ended', () => {
-//             errorMsg('The user has ended sharing the screen');
-//             startButton.disabled = false;
-//         });
-//     }
-//     startButton.addEventListener('click', () => {
-//         navigator.mediaDevices.getDisplayMedia({video: true}).then(
-//             handleSuccess,
-//             error => { errorMsg(`getDisplayMedia error: ${error.name}`, error); }
-//         );
-//     });
-// }
-
-
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-function setup_generic(
+function setup_recordable(
+    checker_func,
+    on_start_func,
     stream_holder,
     container_selector,
-    get_stuff,
-    stuff_name,
-    constraints
 ) {
     let mediaRecorder;
     let recordedBlobs;
@@ -109,6 +122,33 @@ function setup_generic(
     const playButton = document.querySelector(container_selector + ' button#play');
     const downloadButton = document.querySelector(container_selector + ' button#download');
 
+    // CHECK AVAILABILITY
+    checker_func();
+
+    // START
+    startButton.addEventListener('click', async () => {
+        on_start_func(handleSuccess);
+    });
+
+    function handleSuccess(stream) {
+        startButton.disabled = true;
+        recordButton.disabled = false;
+        console.log('Got stream:', stream);
+        stream_holder = stream;
+
+        const gumElement = document.querySelector(container_selector + ' #gum');
+        gumElement.srcObject = stream;
+
+        function on_stream_ended() {
+            errorMsg('The stream was ended by user');
+            startButton.disabled = false;
+            stopRecording()
+        }
+
+        stream.getVideoTracks()[0].addEventListener('ended', on_stream_ended);
+    }
+
+    // RECORD
     recordButton.addEventListener('click', () => {
         if (recordButton.textContent === 'Start Recording') {
             startRecording();
@@ -116,55 +156,6 @@ function setup_generic(
             stopRecording();
         }
     });
-
-    playButton.addEventListener('click', () => {
-        const recordedVideo = document.querySelector(container_selector + ' video#recorded');
-        const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
-        recordedVideo.src = null;
-        recordedVideo.srcObject = null;
-        recordedVideo.src = window.URL.createObjectURL(superBuffer);
-        recordedVideo.controls = true;
-        recordedVideo.play();
-    });
-
-    downloadButton.addEventListener('click', () => {
-        const blob = new Blob(recordedBlobs, {type: 'video/webm'});
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'test.webm';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 100);
-    });
-
-    function handleDataAvailable(event) {
-        console.log('handleDataAvailable', event);
-        if (event.data && event.data.size > 0) {
-            recordedBlobs.push(event.data);
-        }
-    }
-
-    function get_options() {
-        let options = {mimeType: 'video/webm;codecs=vp9,opus'};
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            console.error(`${options.mimeType} is not supported`);
-            options = {mimeType: 'video/webm;codecs=vp8,opus'};
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                console.error(`${options.mimeType} is not supported`);
-                options = {mimeType: 'video/webm'};
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.error(`${options.mimeType} is not supported`);
-                    options = {mimeType: ''};
-                }
-            }
-        }
-        return options;
-    }
 
     function startRecording() {
         recordedBlobs = [];
@@ -200,39 +191,54 @@ function setup_generic(
         downloadButton.disabled = false;
     }
 
-    function handleSuccess(stream) {
-        startButton.disabled = true;
-        recordButton.disabled = false;
-        console.log('Got stream:', stream);
-        stream_holder = stream;
+    // function get_options() {
+    //     let options = {mimeType: 'video/webm;codecs=vp9,opus'};
+    //     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //         console.error(`${options.mimeType} is not supported`);
+    //         options = {mimeType: 'video/webm;codecs=vp8,opus'};
+    //         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //             console.error(`${options.mimeType} is not supported`);
+    //             options = {mimeType: 'video/webm'};
+    //             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //                 console.error(`${options.mimeType} is not supported`);
+    //                 options = {mimeType: ''};
+    //             }
+    //         }
+    //     }
+    //     return options;
+    // }
 
-        const gumVideo = document.querySelector(container_selector + ' video#gum');
-        gumVideo.srcObject = stream;
-
-        stream.getVideoTracks()[0].addEventListener('ended', () => {
-            errorMsg('The stream was ended by user');
-            startButton.disabled = false;
-            stopRecording()
-        });
+    function handleDataAvailable(event) {
+        console.log('handleDataAvailable', event);
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+        }
     }
 
-    startButton.addEventListener('click', async () => {
-        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
-        console.log('Using constraints:', constraints);
-
-        let bound_get_stuff = get_stuff.bind(navigator.mediaDevices);
-        bound_get_stuff(constraints).then(
-            handleSuccess,
-            error => {
-                console.error('mediaDevices.' + stuff_name + ' error:', error);
-                errorMsg('mediaDevices.' + stuff_name + ` error:${error.toString()}`);
-            }
-        );
+    // PLAY
+    playButton.addEventListener('click', () => {
+        const recordShowElement = document.querySelector(container_selector + ' #recorded');
+        const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+        recordShowElement.src = null;
+        recordShowElement.srcObject = null;
+        recordShowElement.src = window.URL.createObjectURL(superBuffer);
+        recordShowElement.controls = true;
+        recordShowElement.play();
     });
 
-    if ((navigator.mediaDevices && stuff_name in navigator.mediaDevices)) {
-        startButton.disabled = false;
-    } else {
-        errorMsg('mediaDevices.' + stuff_name + ' is not supported');
-    }
+    // DOWNLOAD
+    downloadButton.addEventListener('click', () => {
+        const blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'test.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    });
 }
