@@ -23,7 +23,8 @@ function errorMsg(msg, error) {
 }
 
 function setup_screencap() {
-    window.screenCapStream = null;
+    let stream_holder = {stream: null}
+    window.screenCapStreamHolder = stream_holder;
     let container_selector = '#con-screen-cap';
 
     function checker() {
@@ -36,7 +37,6 @@ function setup_screencap() {
     }
 
     function on_start_func(handle_success_func) {
-        // const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
         const constraints = {
             video: true,
             // audio: true,
@@ -50,21 +50,51 @@ function setup_screencap() {
                 errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
             }
         );
+
+        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const mic_constraints = {
+            audio: {
+                echoCancellation: {exact: hasEchoCancellation}
+            },
+            video: false
+        };
+        console.log('Using constraints:', mic_constraints);
+
+        navigator.mediaDevices.getUserMedia(mic_constraints).then(
+            handle_audio_success_func,
+            error => {
+                console.error('mediaDevices.getUserMedia' + ' error:', error);
+                errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
+            }
+        );
+
+    }
+
+    function handle_audio_success_func(stream) {
+        const gumElement = document.querySelector(container_selector + ' audio#gum-audio');
+        gumElement.srcObject = stream;
+
+        // AUDIO must be handled AFTER video stream
+
+        let mic_track = stream.getAudioTracks()[0];
+        window.screenCapStreamHolder.stream.addTrack(mic_track);
     }
 
     setup_recordable(
         container_selector,
         'video',
-        window.screenCapStream,
+        stream_holder,
         checker,
         on_start_func,
+        null
     );
 
 }
 setup_screencap();
 
 function setup_camera() {
-    window.cameraStream = null;
+    let stream_holder = {stream: null}
+    window.cameraStreamHolder = stream_holder;
     let container_selector = '#con-camera';
 
     function checker() {
@@ -100,16 +130,18 @@ function setup_camera() {
     setup_recordable(
         container_selector,
         'video',
-        window.cameraStream,
+        stream_holder,
         checker,
         on_start_func,
+        null
     );
 }
 setup_camera();
 
 
 function setup_audio_only() {
-    window.audioOnlyStream = null;
+    let stream_holder = {stream: null}
+    window.audioOnlyStreamHolder = stream_holder;
     let container_selector = '#con-audio-only';
 
     function checker() {
@@ -122,7 +154,7 @@ function setup_audio_only() {
     }
 
     function on_start_func(handle_success_func) {
-        // const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
         const constraints = {
             audio: {
                 echoCancellation: {exact: hasEchoCancellation}
@@ -143,12 +175,15 @@ function setup_audio_only() {
     setup_recordable(
         container_selector,
         'audio',
-        window.audioOnlyStream,
+        stream_holder,
         checker,
         on_start_func,
+        null
     );
 }
 setup_audio_only();
+
+
 
 
 // -----------------------------------------------------------------------------
@@ -159,6 +194,7 @@ function setup_recordable(
     stream_holder,
     checker_func,
     on_start_func,
+    on_success_func,
 ) {
     let mediaRecorder;
     let recordedBlobs;
@@ -184,10 +220,14 @@ function setup_recordable(
     });
 
     function handleSuccess(stream) {
+        if (on_success_func) {
+            on_success_func();
+        }
+
         startButton.disabled = true;
         recordButton.disabled = false;
         console.log('Got stream:', stream);
-        stream_holder = stream;
+        stream_holder.stream = stream;
 
         const gumElement = document.querySelector(container_selector + ' #gum');
         gumElement.srcObject = stream;
@@ -222,7 +262,7 @@ function setup_recordable(
         // let options = get_options();
 
         try {
-            mediaRecorder = new MediaRecorder(stream_holder);
+            mediaRecorder = new MediaRecorder(stream_holder.stream);
         } catch (e) {
             console.error('Exception while creating MediaRecorder:', e);
             errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);

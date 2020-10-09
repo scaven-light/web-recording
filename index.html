@@ -20,15 +20,18 @@
 
   <div id="con-screen-cap" style="border:solid 4px darkslategrey;">
     <h2>Screen capture</h2>
+    <h3>FOR NOW AUDIO MUST START AFTER VIDEO!<br>First allow screencap and then microphone.</h3>
     <video id="gum" playsinline autoplay muted poster="./favicon-192x192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
     <video id="recorded" playsinline loop poster="./favicon-192x192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
+    <br>
+    <audio id="gum-audio" controls autoplay></audio>
 
     <div>
       <button id="start">Start screen capture</button>
       <button id="record" disabled>Start Recording</button>
       <button id="play" disabled>Play</button>
       <button id="download" disabled>Download</button>
-      <!-- p>Echo cancellation: <input type="checkbox" id="echoCancellation"></p -->
+      <p>Echo cancellation: <input type="checkbox" id="echoCancellation"></p>
     </div>
   </div>
 
@@ -47,7 +50,7 @@
   </div>
 
 
-  <div id="con-audio-only">
+  <div id="con-audio-only" style="border:solid 4px darkslategrey;">
     <h2>Audio only</h2>
     <audio id="gum" controls autoplay></audio>
     <audio id="recorded" controls autoplay></audio>
