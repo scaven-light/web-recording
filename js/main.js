@@ -53,10 +53,11 @@ function setup_screencap() {
     }
 
     setup_recordable(
+        container_selector,
+        'video',
+        window.screenCapStream,
         checker,
         on_start_func,
-        window.screenCapStream,
-        container_selector,
     );
 
 }
@@ -97,10 +98,11 @@ function setup_camera() {
     }
 
     setup_recordable(
+        container_selector,
+        'video',
+        window.cameraStream,
         checker,
         on_start_func,
-        window.cameraStream,
-        container_selector,
     );
 }
 setup_camera();
@@ -109,13 +111,16 @@ setup_camera();
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 function setup_recordable(
+    container_selector,
+    stream_type,
+    stream_holder,
     checker_func,
     on_start_func,
-    stream_holder,
-    container_selector,
 ) {
     let mediaRecorder;
     let recordedBlobs;
+
+    let mime_type = stream_type === 'video' ? 'video/webm' : 'audio/webm'
 
     const startButton = document.querySelector(container_selector + ' button#start');
     const recordButton = document.querySelector(container_selector + ' button#record');
@@ -145,7 +150,13 @@ function setup_recordable(
             stopRecording()
         }
 
-        stream.getVideoTracks()[0].addEventListener('ended', on_stream_ended);
+        if (stream_type === 'video') {
+            // TODO deprecated https://developer.mozilla.org/en-US/docs/Web/API/MediaStream/ended
+            stream.getVideoTracks()[0].addEventListener('ended', on_stream_ended);
+        } else if (stream_type === 'audio') {
+            // TODO same
+            stream.getAudioTracks()[0].addEventListener('ended', on_stream_ended);
+        }
     }
 
     // RECORD
@@ -185,12 +196,18 @@ function setup_recordable(
     }
 
     function stopRecording() {
-        mediaRecorder.stop();
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+        }
         recordButton.textContent = 'Start Recording';
         playButton.disabled = false;
         downloadButton.disabled = false;
     }
 
+    // TODO
+    // firefox has problem with ",opus" part for streams without audio (like screencap)
+    // chrome is ok though
+    //
     // function get_options() {
     //     let options = {mimeType: 'video/webm;codecs=vp9,opus'};
     //     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
@@ -218,7 +235,7 @@ function setup_recordable(
     // PLAY
     playButton.addEventListener('click', () => {
         const recordShowElement = document.querySelector(container_selector + ' #recorded');
-        const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+        const superBuffer = new Blob(recordedBlobs, {type: mime_type});
         recordShowElement.src = null;
         recordShowElement.srcObject = null;
         recordShowElement.src = window.URL.createObjectURL(superBuffer);
@@ -228,7 +245,7 @@ function setup_recordable(
 
     // DOWNLOAD
     downloadButton.addEventListener('click', () => {
-        const blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        const blob = new Blob(recordedBlobs, {type: mime_type});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
