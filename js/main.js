@@ -108,6 +108,49 @@ function setup_camera() {
 setup_camera();
 
 
+function setup_audio_only() {
+    window.audioOnlyStream = null;
+    let container_selector = '#con-audio-only';
+
+    function checker() {
+        const startButton = document.querySelector(container_selector + ' button#start');
+        if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+            startButton.disabled = false;
+        } else {
+            errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
+        }
+    }
+
+    function on_start_func(handle_success_func) {
+        // const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+        const constraints = {
+            audio: {
+                echoCancellation: {exact: hasEchoCancellation}
+            },
+            video: false
+        };
+        console.log('Using constraints:', constraints);
+
+        navigator.mediaDevices.getUserMedia(constraints).then(
+            handle_success_func,
+            error => {
+                console.error('mediaDevices.getUserMedia' + ' error:', error);
+                errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
+            }
+        );
+    }
+
+    setup_recordable(
+        container_selector,
+        'audio',
+        window.audioOnlyStream,
+        checker,
+        on_start_func,
+    );
+}
+setup_audio_only();
+
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 function setup_recordable(
@@ -120,7 +163,12 @@ function setup_recordable(
     let mediaRecorder;
     let recordedBlobs;
 
-    let mime_type = stream_type === 'video' ? 'video/webm' : 'audio/webm'
+    let mime_type = null;
+    if (stream_type === 'video') {
+        mime_type = 'video/webm';
+    } else if (stream_type === 'audio') {
+        mime_type = 'audio/webm';
+    }
 
     const startButton = document.querySelector(container_selector + ' button#start');
     const recordButton = document.querySelector(container_selector + ' button#record');
