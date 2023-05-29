@@ -7,12 +7,12 @@
  */
 'use strict';
 
-// Polyfill in Firefox.
-// See https://blog.mozilla.org/webrtc/getdisplaymedia-now-available-in-adapter-js/
-// if (adapter.browserDetails.browser == 'firefox') {
-//     adapter.browserShim.shimGetDisplayMedia(window, 'screen');
-// }
 
+(() => {
+    setup_screencap();
+    setup_camera();
+    setup_audio_only();
+})();
 
 function errorMsg(msg, error) {
     const errorElement = document.querySelector('#errorMsg');
@@ -23,34 +23,19 @@ function errorMsg(msg, error) {
 }
 
 function setup_screencap() {
-    let stream_holder = {stream: null}
-    window.screenCapStreamHolder = stream_holder;
-    let container_selector = '#con-screen-cap';
+    const stream_holder = {stream: null}
+    const container_selector = '#con-screen-cap';
 
     function checker() {
         const startButton = document.querySelector(container_selector + ' button#start');
         if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
             startButton.disabled = false;
         } else {
-            errorMsg('mediaDevices.getDisplayMedia' + ' is not supported');
+            errorMsg('mediaDevices.getDisplayMedia is not supported');
         }
     }
 
-    function on_start_func(handle_success_func) {
-        const constraints = {
-            video: true,
-            // audio: true,
-        };
-        console.log('Using constraints:', constraints);
-
-        navigator.mediaDevices.getDisplayMedia(constraints).then(
-            handle_success_func,
-            error => {
-                console.error('mediaDevices.getDisplayMedia' + ' error:', error);
-                errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
-            }
-        );
-
+    async function on_start_func(handle_success_func) {
         const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
         const mic_constraints = {
             audio: {
@@ -58,26 +43,43 @@ function setup_screencap() {
             },
             video: false
         };
-        console.log('Using constraints:', mic_constraints);
+        console.log('Microphone constraints:', mic_constraints);
 
-        navigator.mediaDevices.getUserMedia(mic_constraints).then(
-            handle_audio_success_func,
-            error => {
-                console.error('mediaDevices.getUserMedia' + ' error:', error);
-                errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
-            }
-        );
+        let mic_stream = null;
+        try {
+            mic_stream = await navigator.mediaDevices.getUserMedia(mic_constraints);
+        } catch (error) {
+            console.error('mediaDevices.getUserMedia' + ' error:', error);
+            errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
+        }
 
-    }
+        const constraints = {
+            video: true,
+            // audio: true,
+        };
+        console.log('Using constraints:', constraints);
 
-    function handle_audio_success_func(stream) {
-        const gumElement = document.querySelector(container_selector + ' audio#gum-audio');
-        gumElement.srcObject = stream;
+        let screen_stream = null;
+        try {
+            screen_stream = await navigator.mediaDevices.getDisplayMedia(constraints)
+        } catch (error) {
+            console.error('mediaDevices.getDisplayMedia' + ' error:', error);
+            errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
+        }
 
-        // AUDIO must be handled AFTER video stream
+        if (!screen_stream) {
+            console.error('No screen stream');
+            return;
+        }
 
-        let mic_track = stream.getAudioTracks()[0];
-        window.screenCapStreamHolder.stream.addTrack(mic_track);
+        stream_holder.stream = screen_stream;
+
+        if (mic_stream) {
+            const mic_track = mic_stream.getAudioTracks()[0];
+            stream_holder.stream.addTrack(mic_track);
+        }
+
+        handle_success_func(screen_stream);
     }
 
     setup_recordable(
@@ -88,13 +90,10 @@ function setup_screencap() {
         on_start_func,
         null
     );
-
 }
-setup_screencap();
 
 function setup_camera() {
     let stream_holder = {stream: null}
-    window.cameraStreamHolder = stream_holder;
     let container_selector = '#con-camera';
 
     function checker() {
@@ -136,12 +135,10 @@ function setup_camera() {
         null
     );
 }
-setup_camera();
 
 
 function setup_audio_only() {
     let stream_holder = {stream: null}
-    window.audioOnlyStreamHolder = stream_holder;
     let container_selector = '#con-audio-only';
 
     function checker() {
@@ -181,9 +178,6 @@ function setup_audio_only() {
         null
     );
 }
-setup_audio_only();
-
-
 
 
 // -----------------------------------------------------------------------------
@@ -259,8 +253,6 @@ function setup_recordable(
     function startRecording() {
         recordedBlobs = [];
 
-        // let options = get_options();
-
         try {
             mediaRecorder = new MediaRecorder(stream_holder.stream);
         } catch (e) {
@@ -291,27 +283,6 @@ function setup_recordable(
         playButton.disabled = false;
         downloadButton.disabled = false;
     }
-
-    // TODO
-    // firefox has problem with ",opus" part for streams without audio (like screencap)
-    // chrome is ok though
-    //
-    // function get_options() {
-    //     let options = {mimeType: 'video/webm;codecs=vp9,opus'};
-    //     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    //         console.error(`${options.mimeType} is not supported`);
-    //         options = {mimeType: 'video/webm;codecs=vp8,opus'};
-    //         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    //             console.error(`${options.mimeType} is not supported`);
-    //             options = {mimeType: 'video/webm'};
-    //             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    //                 console.error(`${options.mimeType} is not supported`);
-    //                 options = {mimeType: ''};
-    //             }
-    //         }
-    //     }
-    //     return options;
-    // }
 
     function handleDataAvailable(event) {
         console.log('handleDataAvailable', event);

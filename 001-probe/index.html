@@ -3,26 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
-  <!-- meta name="mobile-web-app-capable" content="yes" -->
-  <title>Komodo test pages / Probe</title>
+  <title>Komodo test pages / Web recordings probe</title>
   <link rel="icon" sizes="192x192" href="../Komodo-192.png">
-  <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
 </head>
 
-<body>
-
+<body style="margin: .3em">
   <div id="header">
-    <h1>Web recordings tests. <a href="//github.com/scaven-touchapp/web-recording/tree/main/001-probe">Source</a></h1>
-    <p>For more information see the <a href="https://w3c.github.io/mediacapture-record/">MediaStream Recording</a>.</p>
+    <h1>Komodo test pages / Web recordings probe</h1>
+    <p>Media capture & recording specs can be found <a href="https://w3c.github.io/mediacapture-record/">here</a>.</p>
   </div>
 
-  <div id="con-screen-cap" style="border:solid 4px darkslategrey;">
+  <div id="con-screen-cap" style="border:solid .3em darkslategrey;">
     <h2>Screen capture</h2>
-    <h3>START THE VIDEO FIRST<br>First allow screencap and then microphone.</h3>
-    <video id="gum" playsinline autoplay muted poster="../Komodo-192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
-    <video id="recorded" playsinline loop poster="../Komodo-192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
+      <video id="gum" playsinline autoplay muted poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #CC8888;"></video>
+      <video id="recorded" playsinline loop poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #8888CC;"></video>
     <br>
-    <audio id="gum-audio" controls autoplay></audio>
 
     <div>
       <button id="start">Start screen capture</button>
@@ -33,10 +28,10 @@
     </div>
   </div>
 
-  <div id="con-camera" style="border:solid 4px darkslategrey;">
-    <h2>Camera, recording and download</h2>
-    <video id="gum" playsinline autoplay muted poster="../Komodo-192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
-    <video id="recorded" playsinline loop poster="../Komodo-192.png" style="max-width:49%;border:solid 2px yellowgreen;"></video>
+  <div id="con-camera" style="border:solid .3em darkslategrey;">
+    <h2>Camera</h2>
+    <video id="gum" playsinline autoplay muted poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #BBBB66;"></video>
+    <video id="recorded" playsinline loop poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #88CC88;"></video>
 
     <div>
       <button id="start">Start camera</button>
@@ -48,10 +43,10 @@
   </div>
 
 
-  <div id="con-audio-only" style="border:solid 4px darkslategrey;">
-    <h2>Audio only</h2>
-    <audio id="gum" controls autoplay></audio>
-    <audio id="recorded" controls autoplay></audio>
+  <div id="con-audio-only" style="border:solid .3em darkslategrey;">
+    <h2>Microphone</h2>
+    <audio id="gum" controls autoplay style="border:solid .5em peachpuff"></audio>
+    <audio id="recorded" controls autoplay style="border:solid .5em thistle"></audio>
 
     <div>
       <button id="start">Start Mic</button>
@@ -67,7 +62,6 @@
     HERE BE ERRORS:
   </div>
 
-  <script src="js/main.js"></script>
-
+  <script src="main.js"></script>
 </body>
 </html>
