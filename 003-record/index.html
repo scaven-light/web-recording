@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+  <title>Komodo test pages / Web recordings probe</title>
+  <link rel="icon" sizes="192x192" href="../Komodo-192.png">
+  <script src="main.js"></script>
+</head>
+
+<body style="margin: .3em">
+  <div id="header">
+    <h1>Recorder test</h1>
+  </div>
+
+  <div id="con-screen-cap" style="border:solid .3em darkslategrey;">
+    <h2>Screen capture</h2>
+      <video id="gum" playsinline autoplay muted poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #CC8888;"></video>
+      <video id="recorded" playsinline loop poster="../Komodo-192.png" style="max-height:70vh;max-width:100%;box-sizing: border-box;border:solid .5em #8888CC;"></video>
+    <br>
+
+    <div>
+      <button id="start">Start screen capture</button>
+      <button id="record" disabled>Start Recording</button>
+      <button id="play" disabled>Play</button>
+      <button id="download" disabled>Download</button>
+<!--      <p>Echo cancellation: <input type="checkbox" id="echoCancellation"></p>-->
+      <p>MediaRecorder MIME type: <input type="text" id="recorderMimeType" value="video/webm;codecs=h264,opus" style="width:20rem"></p>
+    </div>
+  </div>
+
+  <div id="errorMsg" style="color:darkred;border:solid 2px darkslateblue;">
+    HERE BE ERRORS:
+  </div>
+
+</body>
+</html>
