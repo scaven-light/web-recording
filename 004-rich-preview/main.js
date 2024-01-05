@@ -51,10 +51,19 @@ function addPreviewTest(link, name, thumbnailUrl, type=1) {
   preview.appendChild(copyBtn);
 
   copyBtn.onclick = () => {
-    const blobHTML = new Blob([html], {type: 'text/html'});
-    const blobText = new Blob([link], {type: 'text/plain'});
-    const clipboardItem = new ClipboardItem({ 'text/html': blobHTML, 'text/plain': blobText });
-    navigator.clipboard.write([clipboardItem]);
+    try {
+      const blobHTML = new Blob([html], {type: 'text/html'});
+      const blobText = new Blob([link], {type: 'text/plain'});
+      const clipboardItem = new ClipboardItem({ 'text/html': blobHTML, 'text/plain': blobText });
+      navigator.clipboard.write([clipboardItem]);
+    } catch (e) {
+      document.oncopy = (event) => {
+        event.clipboardData.setData('text/plain', link);
+        event.preventDefault();
+      };
+      document.execCommand('copy');
+      document.oncopy = null;
+    }
   };
 
   return preview
