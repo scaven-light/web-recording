@@ -1,3 +1,5 @@
+'use strict';
+
 (async () => {
   const mainDiv = document.createElement('div');
   document.body.appendChild(mainDiv);
@@ -7,7 +9,7 @@
   div1.style.backgroundColor = '#CC8888';
   mainDiv.appendChild(div1);
 
-  div1.innerText = 'VIDEO 1:'
+  div1.innerText = 'VIDEO 1:';
   const vid1 = document.createElement('video');
   vid1.autoplay = true;
   vid1.playsinline = true;
@@ -26,7 +28,7 @@
   div2.style.backgroundColor = '#88CC88';
   mainDiv.appendChild(div2);
 
-  div2.innerText = 'VIDEO 2:'
+  div2.innerText = 'VIDEO 2:';
   const vid2 = document.createElement('video');
   vid2.autoplay = true;
   vid2.playsinline = true;
