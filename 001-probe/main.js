@@ -1,17 +1,10 @@
-/*
- *  Copyright (c) 2018 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
 'use strict';
 
 
 (() => {
-    setup_screencap();
-    setup_camera();
-    setup_audio_only();
+    setupScreencap();
+    setupCamera();
+    setupAudioOnly();
 })();
 
 function errorMsg(msg, error) {
@@ -22,12 +15,12 @@ function errorMsg(msg, error) {
     }
 }
 
-function setup_screencap() {
-    const stream_holder = {stream: null}
-    const container_selector = '#con-screen-cap';
+function setupScreencap() {
+    const streamHolder = {stream: null};
+    const containerSelector = '#con-screen-cap';
 
     function checker() {
-        const startButton = document.querySelector(container_selector + ' button#start');
+        const startButton = document.querySelector(containerSelector + ' button#start');
         if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
             startButton.disabled = false;
         } else {
@@ -35,19 +28,19 @@ function setup_screencap() {
         }
     }
 
-    async function on_start_func(handle_success_func) {
-        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
-        const mic_constraints = {
+    async function onStartFunc(handleSuccessFunc) {
+        const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
+        const micConstraints = {
             audio: {
                 echoCancellation: {exact: hasEchoCancellation}
             },
             video: false
         };
-        console.log('Microphone constraints:', mic_constraints);
+        console.log('Microphone constraints:', micConstraints);
 
-        let mic_stream = null;
+        let micStream = null;
         try {
-            mic_stream = await navigator.mediaDevices.getUserMedia(mic_constraints);
+            micStream = await navigator.mediaDevices.getUserMedia(micConstraints);
         } catch (error) {
             console.error('mediaDevices.getUserMedia' + ' error:', error);
             errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
@@ -59,45 +52,44 @@ function setup_screencap() {
         };
         console.log('Using constraints:', constraints);
 
-        let screen_stream = null;
+        let screenStream = null;
         try {
-            screen_stream = await navigator.mediaDevices.getDisplayMedia(constraints)
+            screenStream = await navigator.mediaDevices.getDisplayMedia(constraints)
         } catch (error) {
             console.error('mediaDevices.getDisplayMedia' + ' error:', error);
             errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
         }
 
-        if (!screen_stream) {
+        if (!screenStream) {
             console.error('No screen stream');
             return;
         }
 
-        stream_holder.stream = screen_stream;
+        streamHolder.stream = screenStream;
 
-        if (mic_stream) {
-            const mic_track = mic_stream.getAudioTracks()[0];
-            stream_holder.stream.addTrack(mic_track);
+        if (micStream) {
+            streamHolder.stream.addTrack(micStream.getAudioTracks()[0]);
         }
 
-        handle_success_func(screen_stream);
+        handleSuccessFunc(screenStream);
     }
 
-    setup_recordable(
-        container_selector,
+    setupRecordable(
+        containerSelector,
         'video',
-        stream_holder,
+        streamHolder,
         checker,
-        on_start_func,
+        onStartFunc,
         null
     );
 }
 
-function setup_camera() {
-    let stream_holder = {stream: null}
-    let container_selector = '#con-camera';
+function setupCamera() {
+    let streamHolder = {stream: null};
+    let containerSelector = '#con-camera';
 
     function checker() {
-        const startButton = document.querySelector(container_selector + ' button#start');
+        const startButton = document.querySelector(containerSelector + ' button#start');
         if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
             startButton.disabled = false;
         } else {
@@ -105,8 +97,8 @@ function setup_camera() {
         }
     }
 
-    function on_start_func(handle_success_func) {
-        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+    function onStartFunc(handleSuccessFunc) {
+        const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
         const constraints = {
             audio: {
                 echoCancellation: {exact: hasEchoCancellation}
@@ -118,7 +110,7 @@ function setup_camera() {
         console.log('Using constraints:', constraints);
 
         navigator.mediaDevices.getUserMedia(constraints).then(
-            handle_success_func,
+            handleSuccessFunc,
             error => {
                 console.error('mediaDevices.getUserMedia' + ' error:', error);
                 errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
@@ -126,23 +118,23 @@ function setup_camera() {
         );
     }
 
-    setup_recordable(
-        container_selector,
+    setupRecordable(
+        containerSelector,
         'video',
-        stream_holder,
+        streamHolder,
         checker,
-        on_start_func,
+        onStartFunc,
         null
     );
 }
 
 
-function setup_audio_only() {
-    let stream_holder = {stream: null}
-    let container_selector = '#con-audio-only';
+function setupAudioOnly() {
+    let streamHolder = {stream: null};
+    let containerSelector = '#con-audio-only';
 
     function checker() {
-        const startButton = document.querySelector(container_selector + ' button#start');
+        const startButton = document.querySelector(containerSelector + ' button#start');
         if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
             startButton.disabled = false;
         } else {
@@ -150,8 +142,8 @@ function setup_audio_only() {
         }
     }
 
-    function on_start_func(handle_success_func) {
-        const hasEchoCancellation = document.querySelector(container_selector + ' #echoCancellation').checked;
+    function onStartFunc(handleSuccessFunc) {
+        const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
         const constraints = {
             audio: {
                 echoCancellation: {exact: hasEchoCancellation}
@@ -161,7 +153,7 @@ function setup_audio_only() {
         console.log('Using constraints:', constraints);
 
         navigator.mediaDevices.getUserMedia(constraints).then(
-            handle_success_func,
+            handleSuccessFunc,
             error => {
                 console.error('mediaDevices.getUserMedia' + ' error:', error);
                 errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
@@ -169,12 +161,12 @@ function setup_audio_only() {
         );
     }
 
-    setup_recordable(
-        container_selector,
+    setupRecordable(
+        containerSelector,
         'audio',
-        stream_holder,
+        streamHolder,
         checker,
-        on_start_func,
+        onStartFunc,
         null
     );
 }
@@ -182,62 +174,60 @@ function setup_audio_only() {
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-function setup_recordable(
-    container_selector,
-    stream_type,
-    stream_holder,
-    checker_func,
-    on_start_func,
-    on_success_func,
+function setupRecordable(
+    containerSelector,
+    streamType,
+    streamHolder,
+    checkerFunc,
+    onStartFunc,
+    onSuccessFunc,
 ) {
     let mediaRecorder;
     let recordedBlobs;
 
-    let mime_type = null;
-    if (stream_type === 'video') {
-        mime_type = 'video/webm';
-    } else if (stream_type === 'audio') {
-        mime_type = 'audio/webm';
+    let mimeType = null;
+    if (streamType === 'video') {
+        mimeType = 'video/webm';
+    } else if (streamType === 'audio') {
+        mimeType = 'audio/webm';
     }
 
-    const startButton = document.querySelector(container_selector + ' button#start');
-    const recordButton = document.querySelector(container_selector + ' button#record');
-    const playButton = document.querySelector(container_selector + ' button#play');
-    const downloadButton = document.querySelector(container_selector + ' button#download');
+    const startButton = document.querySelector(containerSelector + ' button#start');
+    const recordButton = document.querySelector(containerSelector + ' button#record');
+    const playButton = document.querySelector(containerSelector + ' button#play');
+    const downloadButton = document.querySelector(containerSelector + ' button#download');
 
     // CHECK AVAILABILITY
-    checker_func();
+    checkerFunc();
 
     // START
     startButton.addEventListener('click', async () => {
-        on_start_func(handleSuccess);
+        onStartFunc(handleSuccess);
     });
 
     function handleSuccess(stream) {
-        if (on_success_func) {
-            on_success_func();
+        if (onSuccessFunc) {
+            onSuccessFunc();
         }
 
         startButton.disabled = true;
         recordButton.disabled = false;
         console.log('Got stream:', stream);
-        stream_holder.stream = stream;
+        streamHolder.stream = stream;
 
-        const gumElement = document.querySelector(container_selector + ' #gum');
+        const gumElement = document.querySelector(containerSelector + ' #gum');
         gumElement.srcObject = stream;
 
-        function on_stream_ended() {
+        function onStreamEnded() {
             errorMsg('The stream was ended by user');
             startButton.disabled = false;
             stopRecording()
         }
 
-        if (stream_type === 'video') {
-            // TODO deprecated https://developer.mozilla.org/en-US/docs/Web/API/MediaStream/ended
-            stream.getVideoTracks()[0].addEventListener('ended', on_stream_ended);
-        } else if (stream_type === 'audio') {
-            // TODO same
-            stream.getAudioTracks()[0].addEventListener('ended', on_stream_ended);
+        if (streamType === 'video') {
+            stream.getVideoTracks()[0].addEventListener('ended', onStreamEnded);
+        } else if (streamType === 'audio') {
+            stream.getAudioTracks()[0].addEventListener('ended', onStreamEnded);
         }
     }
 
@@ -254,7 +244,7 @@ function setup_recordable(
         recordedBlobs = [];
 
         try {
-            mediaRecorder = new MediaRecorder(stream_holder.stream);
+            mediaRecorder = new MediaRecorder(streamHolder.stream);
         } catch (e) {
             console.error('Exception while creating MediaRecorder:', e);
             errorMsg(`Exception while creating MediaRecorder: ${JSON.stringify(e)}`);
@@ -293,8 +283,8 @@ function setup_recordable(
 
     // PLAY
     playButton.addEventListener('click', () => {
-        const recordShowElement = document.querySelector(container_selector + ' #recorded');
-        const superBuffer = new Blob(recordedBlobs, {type: mime_type});
+        const recordShowElement = document.querySelector(containerSelector + ' #recorded');
+        const superBuffer = new Blob(recordedBlobs, {type: mimeType});
         recordShowElement.src = null;
         recordShowElement.srcObject = null;
         recordShowElement.src = window.URL.createObjectURL(superBuffer);
@@ -304,7 +294,7 @@ function setup_recordable(
 
     // DOWNLOAD
     downloadButton.addEventListener('click', () => {
-        const blob = new Blob(recordedBlobs, {type: mime_type});
+        const blob = new Blob(recordedBlobs, {type: mimeType});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
