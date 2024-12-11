@@ -22,7 +22,7 @@
 
   vid1.srcObject = s1;
   ///// //// //// //// //// ////
-  mainDiv.appendChild( document.createElement('hr'));
+  mainDiv.appendChild(document.createElement('hr'));
   ///// //// //// //// //// ////
   const div2 = document.createElement('div');
   div2.style.backgroundColor = '#88CC88';
@@ -37,7 +37,10 @@
 
   div2.appendChild(vid2);
 
-  const s2 = await navigator.mediaDevices.getUserMedia({audio: false, video: {frameRate:{ideal:30,max:30},width:{ideal:1280,max:1280},height:{ideal:720,max:720}}});
+  const s2 = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {frameRate: {ideal: 30, max: 30}, width: {ideal: 1280, max: 1280}, height: {ideal: 720, max: 720}}
+  });
 
   vid2.srcObject = s2;
 })();

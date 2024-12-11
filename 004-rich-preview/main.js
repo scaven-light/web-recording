@@ -1,6 +1,6 @@
 'use strict';
 
-function addPreviewTest(link, name, thumbnailUrl, type=1) {
+function addPreviewTest(link, name, thumbnailUrl, type = 1) {
 
   let html = '';
   let backgroundColor = 'grey';
@@ -10,8 +10,8 @@ function addPreviewTest(link, name, thumbnailUrl, type=1) {
     // Space between title and link
     html = '<p>' +
       name +
-      ' <a target="_blank" href="' + link +'">Watch Video</a>' +
-      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link +'">' +
+      ' <a target="_blank" href="' + link + '">Watch Video</a>' +
+      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link + '">' +
       '<img style="width: 300px;" src="' + thumbnailUrl + '">' +
       '</a>';
   } else if (type == 2) {
@@ -19,8 +19,8 @@ function addPreviewTest(link, name, thumbnailUrl, type=1) {
     // Flex container
     html = '<p style="display: flex; flex-wrap: wrap; justify-content: space-between; width: 300px; ">' +
       name +
-      '  <a target="_blank" href="' + link +'">Watch Video</a>' +
-      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link +'">' +
+      '  <a target="_blank" href="' + link + '">Watch Video</a>' +
+      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link + '">' +
       '<img style="width: 300px;" src="' + thumbnailUrl + '">' +
       '</a>';
   } else {
@@ -29,8 +29,8 @@ function addPreviewTest(link, name, thumbnailUrl, type=1) {
     html = '<p>' +
       name +
       '<br>' +
-      '<a target="_blank" href="' + link +'">Watch Video</a>' +
-      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link +'">' +
+      '<a target="_blank" href="' + link + '">Watch Video</a>' +
+      '</p>' + '<a class="komodo-gmail-thumbnail" target="_blank" href="' + link + '">' +
       '<img style="width: 300px;" src="' + thumbnailUrl + '">' +
       '</a>';
   }
@@ -54,7 +54,7 @@ function addPreviewTest(link, name, thumbnailUrl, type=1) {
     try {
       const blobHTML = new Blob([html], {type: 'text/html'});
       const blobText = new Blob([link], {type: 'text/plain'});
-      const clipboardItem = new ClipboardItem({ 'text/html': blobHTML, 'text/plain': blobText });
+      const clipboardItem = new ClipboardItem({'text/html': blobHTML, 'text/plain': blobText});
       navigator.clipboard.write([clipboardItem]);
     } catch (e) {
       document.oncopy = (event) => {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mainList.setAttribute("class", "komodo-previews-list");
   document.body.appendChild(mainList);
 
-  for (let type=1;type<=3;type++) {
+  for (let type = 1; type <= 3; type++) {
     const preview1 = addPreviewTest(
       'https://komododecks.com/recordings/GTqgoz9kzFi998xfjUFz',
       'Komodo Hello World Introduction!',
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainList.appendChild(preview1);
   }
 
-  for (let type=1;type<=3;type++) {
+  for (let type = 1; type <= 3; type++) {
     const preview2 = addPreviewTest(
       'https://komododecks.com/recordings/tgE4xK4IVgg6axieG6Gz',
       'Intro to Komodo\'s Video Editor',
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainList.appendChild(preview2);
   }
 
-  for (let type=1;type<=3;type++) {
+  for (let type = 1; type <= 3; type++) {
     const preview3 = addPreviewTest(
       'https://komododecks.com/recordings/toPsWxrmqfmf2Unm7xdH',
       'Mic and Camera',
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainList.appendChild(preview3);
   }
 
-  for (let type=1;type<=3;type++) {
+  for (let type = 1; type <= 3; type++) {
     const preview1 = addPreviewTest(
       'https://komododecks.com/recordings/GTqgoz9kzFi998xfjUFz',
       'Komodo Hello World Introduction but a long long loooooooooong looooooooooooooooong title!',
