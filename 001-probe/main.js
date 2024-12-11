@@ -16,19 +16,14 @@ function errorMsg(msg, error) {
 }
 
 function setupScreencap() {
-    const streamHolder = {stream: null};
     const containerSelector = '#con-screen-cap';
 
-    function checker() {
-        const startButton = document.querySelector(containerSelector + ' button#start');
-        if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
-            startButton.disabled = false;
-        } else {
-            errorMsg('mediaDevices.getDisplayMedia is not supported');
-        }
+    if (!(navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+        errorMsg('mediaDevices.getDisplayMedia is not supported');
+        return;
     }
 
-    async function onStartFunc(handleSuccessFunc) {
+    async function start(handlerOnSuccess) {
         const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
         const micConstraints = {
             audio: {
@@ -58,46 +53,38 @@ function setupScreencap() {
         } catch (error) {
             console.error('mediaDevices.getDisplayMedia' + ' error:', error);
             errorMsg('mediaDevices.getDisplayMedia' + ` error:${error.toString()}`);
+            return;
         }
-
         if (!screenStream) {
-            console.error('No screen stream');
+            console.error('Empty screen stream');
+            errorMsg('Empty screen stream');
             return;
         }
 
-        streamHolder.stream = screenStream;
-
+        const compoStream = screenStream;
         if (micStream) {
-            streamHolder.stream.addTrack(micStream.getAudioTracks()[0]);
+            compoStream.addTrack(micStream.getAudioTracks()[0]);
         }
 
-        handleSuccessFunc(screenStream);
+        handlerOnSuccess(compoStream);
     }
 
-    setupRecordable(
-        containerSelector,
-        'video',
-        streamHolder,
-        checker,
-        onStartFunc,
-        null
-    );
+    setupRecordable({
+        containerSelector: containerSelector,
+        streamType: 'video',
+        onStartClick: start,
+    });
 }
 
 function setupCamera() {
-    let streamHolder = {stream: null};
-    let containerSelector = '#con-camera';
+    const containerSelector = '#con-camera';
 
-    function checker() {
-        const startButton = document.querySelector(containerSelector + ' button#start');
-        if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
-            startButton.disabled = false;
-        } else {
-            errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
-        }
+    if (!(navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+        errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
+        return;
     }
 
-    function onStartFunc(handleSuccessFunc) {
+    function start(handlerOnSuccess) {
         const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
         const constraints = {
             audio: {
@@ -110,7 +97,7 @@ function setupCamera() {
         console.log('Using constraints:', constraints);
 
         navigator.mediaDevices.getUserMedia(constraints).then(
-            handleSuccessFunc,
+            handlerOnSuccess,
             error => {
                 console.error('mediaDevices.getUserMedia' + ' error:', error);
                 errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
@@ -118,31 +105,23 @@ function setupCamera() {
         );
     }
 
-    setupRecordable(
-        containerSelector,
-        'video',
-        streamHolder,
-        checker,
-        onStartFunc,
-        null
-    );
+    setupRecordable({
+        containerSelector: containerSelector,
+        streamType: 'video',
+        onStartClick: start,
+    });
 }
 
 
 function setupAudioOnly() {
-    let streamHolder = {stream: null};
-    let containerSelector = '#con-audio-only';
+    const containerSelector = '#con-audio-only';
 
-    function checker() {
-        const startButton = document.querySelector(containerSelector + ' button#start');
-        if ((navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
-            startButton.disabled = false;
-        } else {
-            errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
-        }
+    if (!(navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices)) {
+        errorMsg('mediaDevices.' + 'getUserMedia' + ' is not supported');
+        return;
     }
 
-    function onStartFunc(handleSuccessFunc) {
+    function start(handlerOnSuccess) {
         const hasEchoCancellation = document.querySelector(containerSelector + ' #echoCancellation').checked;
         const constraints = {
             audio: {
@@ -153,7 +132,7 @@ function setupAudioOnly() {
         console.log('Using constraints:', constraints);
 
         navigator.mediaDevices.getUserMedia(constraints).then(
-            handleSuccessFunc,
+            handlerOnSuccess,
             error => {
                 console.error('mediaDevices.getUserMedia' + ' error:', error);
                 errorMsg('mediaDevices.getUserMedia' + ` error:${error.toString()}`);
@@ -161,27 +140,22 @@ function setupAudioOnly() {
         );
     }
 
-    setupRecordable(
-        containerSelector,
-        'audio',
-        streamHolder,
-        checker,
-        onStartFunc,
-        null
-    );
+    setupRecordable({
+        containerSelector: containerSelector,
+        streamType: 'audio',
+        onStartClick: start,
+    });
 }
 
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-function setupRecordable(
+function setupRecordable({
     containerSelector,
     streamType,
-    streamHolder,
-    checkerFunc,
-    onStartFunc,
-    onSuccessFunc,
-) {
+    onStartClick,
+}) {
+    const streamHolder = {stream: null};
     let mediaRecorder;
     let recordedBlobs;
 
@@ -197,19 +171,13 @@ function setupRecordable(
     const playButton = document.querySelector(containerSelector + ' button#play');
     const downloadButton = document.querySelector(containerSelector + ' button#download');
 
-    // CHECK AVAILABILITY
-    checkerFunc();
-
     // START
     startButton.addEventListener('click', async () => {
-        onStartFunc(handleSuccess);
+        onStartClick(handleStream);
     });
+    startButton.disabled = false;
 
-    function handleSuccess(stream) {
-        if (onSuccessFunc) {
-            onSuccessFunc();
-        }
-
+    function handleStream(stream) {
         startButton.disabled = true;
         recordButton.disabled = false;
         console.log('Got stream:', stream);
