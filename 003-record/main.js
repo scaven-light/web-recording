@@ -156,6 +156,7 @@ const screenrec = {
     this.recordButton.textContent = 'Stop Recording';
     this.playButton.disabled = true;
     this.downloadButton.disabled = true;
+    this.pauseButton.disabled = false;
   },
 
   stopRecording() {
@@ -165,6 +166,17 @@ const screenrec = {
     this.recordButton.textContent = 'Start Recording';
     this.playButton.disabled = false;
     this.downloadButton.disabled = false;
+    this.pauseButton.disabled = true;
+  },
+
+  onPauseButtonClick() {
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.pause();
+      this.pauseButton.textContent = 'Resume Recording';
+    } else if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+      this.mediaRecorder.resume();
+      this.pauseButton.textContent = 'Pause Recording';
+    }
   },
 
   handleDataAvailable(event) {
@@ -179,6 +191,7 @@ const screenrec = {
     this.playButton = document.querySelector(this.containerSelector + ' button#play');
     this.recordButton = document.querySelector(this.containerSelector + ' button#record');
     this.downloadButton = document.querySelector(this.containerSelector + ' button#download');
+    this.pauseButton = document.querySelector(this.containerSelector + ' button#pause');  // Add pause button
 
     if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
       this.startButton.disabled = false;
@@ -198,6 +211,9 @@ const screenrec = {
     });
     this.downloadButton.addEventListener('click', () => {
       this.onDownloadButtonClick()
+    });
+    this.pauseButton.addEventListener('click', () => {
+      this.onPauseButtonClick()
     });
   },
 };
