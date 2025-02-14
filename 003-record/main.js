@@ -149,7 +149,7 @@ const screenrec = {
     this.mediaRecorder.onstop = (event) => {
       console.log('Recorder stopped:', event, 'Blobs recorded:', this.recordedBlobs);
     };
-    this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+    this.mediaRecorder.ondataavailable = this.handleDataAvailable.bind(this);
     this.mediaRecorder.start(5000);
     console.log('MediaRecorder started', this.mediaRecorder);
 
@@ -167,6 +167,7 @@ const screenrec = {
     this.playButton.disabled = false;
     this.downloadButton.disabled = false;
     this.pauseButton.disabled = true;
+    this.pauseButton.textContent = 'Pause Recording';
   },
 
   onPauseButtonClick() {
